@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NASA APOD - Space Pulse</title>
+  </head>
+  <body>
+    <div id="app">
+      <main class="main-content">
+        <!-- ===== Header (full width) ===== -->
+        <div class="user-welcome">
+          <h2 id="greeting">Good morning, traveler</h2>
+          <p id="focus">Search the web, save links, and manage notes.</p>
+          <div class="datetime">
+            <span id="clock">12:00:00</span>
+            <span id="date">Mon, Jan 1</span>
+          </div>
+          <!-- Avatar emoji appears here -->
+          <div id="avatar-emoji" class="avatar-emoji"></div>
+        </div>
+
+        <div class="pulse-bar"></div>
+
+        <!-- ===== Search bar (wide, centered) ===== -->
+        <form id="search-form" class="search-form">
+          <input
+            id="search-input"
+            class="search-input"
+            type="text"
+            placeholder="Search the web..."
+            autocomplete="off"
+          />
+          <button type="submit" class="search-button">Search</button>
+        </form>
+
+        <!-- ===== Quick links (clean, centered) ===== -->
+        <div class="links-section">
+          <div class="links-header">
+            <h2>Quick Access</h2>
+            <button id="add-link-button" class="icon-button" title="Add link">+</button>
+          </div>
+          <div id="links" class="links"></div>
+        </div>
+
+        <!-- ===== APOD + Notes row ===== -->
+        <div class="apod-notes-row">
+          <!-- Left: APOD content -->
+          <section class="apod-section">
+            <header class="site-header">
+              <h1>NASA Astronomy Picture of the Day</h1>
+              <p>Automatically updated daily using NASA's APOD API.</p>
+            </header>
+
+            <div class="apod-layout">
+              <div class="apod-media">
+                <div id="apod-media-container" class="media-container"></div>
+              </div>
+              <div class="apod-info">
+                <h2 id="apod-title">Loading...</h2>
+                <p id="apod-date" class="apod-date"></p>
+                <p id="apod-explanation" class="apod-explanation"></p>
+                <div class="apod-controls">
+                  <label>
+                    Pick a date:
+                    <input type="date" id="apod-date-input" />
+                  </label>
+                  <button id="apod-refresh-btn" type="button">Fetch APOD</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Right: Sticky notes -->
+          <section class="notes-section">
+            <div class="todo">
+              <h2>Sticky Notes</h2>
+              <form id="todo-form">
+                <input
+                  id="todo-input"
+                  type="text"
+                  placeholder="Write a sticky note..."
+                  autocomplete="off"
+                />
+                <input id="todo-color" type="color" value="#f7d96a" />
+              </form>
+              <div id="todo-grid" class="todo-grid"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ===== Modals (unchanged) ===== -->
+        <div id="link-modal" class="modal hidden">
+          <div class="modal-content">
+            <h3 id="link-modal-title">Add Quick Link</h3>
+            <form id="link-form">
+              <label>Name <input id="link-name" type="text" autocomplete="off" /></label>
+              <label>URL <input id="link-url" type="url" autocomplete="off" /></label>
+              <div class="modal-actions">
+                <button type="button" id="link-cancel">Cancel</button>
+                <button type="submit" id="link-save">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div id="user-setup-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Pick your emoji</h3>
+    <div class="emoji-picker">
+      <button type="button" class="emoji-btn" data-emoji="👨‍🚀">👨‍🚀</button>
+      <button type="button" class="emoji-btn" data-emoji="👽">👽</button>
+      <button type="button" class="emoji-btn" data-emoji="🤖">🤖</button>
+      <button type="button" class="emoji-btn" data-emoji="🐱">🐱</button>
+      <button type="button" class="emoji-btn" data-emoji="🪐">🪐</button>
+      <button type="button" class="emoji-btn" data-emoji="🌙">🌙</button>
+    </div>
+  </div>
+</div>
+</div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
