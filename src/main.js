@@ -200,7 +200,7 @@ function renderApod(data) {
 
     mediaContainer.appendChild(img);
   } else {
-    mediaContainer.textContent = "NASA image is unavailable.";
+    mediaContainer.textContent = "";
   }
 }
 
