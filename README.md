@@ -1,10 +1,10 @@
-## MY TABS
+# MY TABS
 Space Pulse is a custom new tab page built with the NASA Astronomy Picture of the Day API. Space Pulse gives a new tab more functionality while being more fun and engaging than a normal new tab. It has a search bar, quick links, sticky notes, and an emoji profile.
 
-# Motivation
+## Motivation
 I wanted to build this new tab page because I wanted something that was more engaging for a new tab but didn't sacrifice the beauty of a default new tab
 
-# Preview
+## Preview
 
 
 <img width="1451" height="885" alt="Screenshot 2026-08-28 121002" src="https://github.com/user-attachments/assets/18b2640d-ef22-4ef9-82f9-16aba99c9781" />
