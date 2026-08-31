@@ -136,9 +136,10 @@ async function fetchApod(dateString) {
     if (explanationEl) explanationEl.textContent = "";
     if (mediaContainer) mediaContainer.innerHTML = "";
 
-    const url = new URL("https://api.nasa.gov/planetary/apod");
-    url.searchParams.set("api_key", API_KEY);
-    if (dateString) url.searchParams.set("date", dateString);
+  const url = new URL("https://api.nasa.gov/planetary/apod");
+url.searchParams.set("api_key", API_KEY || "DEMO_KEY");
+url.searchParams.set("thumbs", "true");
+if (dateString) url.searchParams.set("date", dateString);
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`NASA API error: ${res.status}`);
@@ -158,7 +159,15 @@ async function fetchApod(dateString) {
 }
 
 function renderApod(data) {
-  const { title, date, explanation, media_type, url } = data;
+  const {
+    title,
+    date,
+    explanation,
+    media_type,
+    url,
+    hdurl,
+    thumbnail_url
+  } = data;
 
   if (titleEl) titleEl.textContent = title;
   if (dateEl) dateEl.textContent = date;
@@ -166,7 +175,9 @@ function renderApod(data) {
   if (mediaContainer) mediaContainer.innerHTML = "";
 
   if (media_type === "image") {
-    setBackground(url);
+    setBackground(hdurl || url);
+  } else if (media_type === "video") {
+    setBackground(thumbnail_url || DEFAULT_BG_IMAGE);
   } else {
     setBackground(DEFAULT_BG_IMAGE);
   }
