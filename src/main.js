@@ -136,9 +136,10 @@ async function fetchApod(dateString) {
     if (explanationEl) explanationEl.textContent = "";
     if (mediaContainer) mediaContainer.innerHTML = "";
 
-    const url = new URL("https://api.nasa.gov/planetary/apod");
-    url.searchParams.set("api_key", API_KEY);
-    if (dateString) url.searchParams.set("date", dateString);
+  const url = new URL("https://api.nasa.gov/planetary/apod");
+url.searchParams.set("api_key", API_KEY || "DEMO_KEY");
+url.searchParams.set("thumbs", "true");
+if (dateString) url.searchParams.set("date", dateString);
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`NASA API error: ${res.status}`);
@@ -158,36 +159,48 @@ async function fetchApod(dateString) {
 }
 
 function renderApod(data) {
-  const { title, date, explanation, media_type, url } = data;
+  const {
+    title,
+    date,
+    explanation,
+    media_type,
+    url,
+    hdurl,
+    thumbnail_url
+  } = data;
 
-  if (titleEl) titleEl.textContent = title;
-  if (dateEl) dateEl.textContent = date;
+  if (titleEl) titleEl.textContent = title || "NASA Astronomy Picture of the Day";
+  if (dateEl) dateEl.textContent = date || "";
   if (explanationEl) explanationEl.textContent = explanation || "";
   if (mediaContainer) mediaContainer.innerHTML = "";
 
+  let imageUrl = "";
+
   if (media_type === "image") {
-    setBackground(url);
+    imageUrl = hdurl || url;
+  } else if (media_type === "video") {
+    imageUrl = thumbnail_url || "";
+  }
+
+  if (imageUrl) {
+    setBackground(imageUrl);
   } else {
     setBackground(DEFAULT_BG_IMAGE);
   }
 
   if (!mediaContainer) return;
 
-  if (media_type === "image") {
+  if (imageUrl) {
     const img = document.createElement("img");
-    img.src = url;
-    img.alt = title;
+
+    img.src = imageUrl;
+    img.alt = title || "NASA Astronomy Picture of the Day";
     img.className = "apod-image";
+    img.loading = "lazy";
+
     mediaContainer.appendChild(img);
-  } else if (media_type === "video") {
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.className = "apod-video";
-    iframe.allowFullscreen = true;
-    iframe.loading = "lazy";
-    mediaContainer.appendChild(iframe);
   } else {
-    mediaContainer.textContent = "Unsupported media type.";
+    mediaContainer.textContent = "NASA image is unavailable.";
   }
 }
 
