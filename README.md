@@ -1,26 +1,32 @@
-# My Tab
+## MY TABS
+Space Pulse is a custom new tab page built with the NASA Astronomy Picture of the Day API. Space Pulse gives a new tab more functionality while being more fun and engaging than a normal new tab. It has a search bar, quick links, sticky notes, and an emoji profile.
 
-My Tab is a simple custom new tab page that I made using the NASA Astronomy Picture of the Day API. I wanted to make the new tab page more useful and interesting instead of just having a blank or basic page.
+# Motivation
+I wanted to build this new tab page because I wanted something that was more engaging for a new tab but didn't sacrifice the beauty of a default new tab
 
-It includes a search bar, quick links, sticky notes, the current time and date, a greeting, and an emoji profile.
+# Preview
 
-## Why I Made This
 
-I wanted to make a new tab page that looked nice but was also useful for everyday browsing. I also wanted to learn more about using APIs and saving data in the browser.
+<img width="1451" height="885" alt="Screenshot 2026-08-28 121002" src="https://github.com/user-attachments/assets/18b2640d-ef22-4ef9-82f9-16aba99c9781" />
+<img width="1563" height="877" alt="Screenshot 2026-08-28 121025" src="https://github.com/user-attachments/assets/de1a395e-8861-4542-b7e4-47a36cab747e" />
+<img width="1335" height="852" alt="Screenshot 2026-08-28 121111" src="https://github.com/user-attachments/assets/e991f56d-429e-4ecd-a7cb-9a3de1b8cdd2" />
 
-## Features
+# Features
+> NASA APOD
 
-* NASA Astronomy Picture of the Day as the background
-* Search bar
-* Quick links for frequently visited websites
-* Sticky notes
-* Current time and date
-* Greeting based on the time of day
-* Emoji profile
+Search bar
 
-## Search Engines
+Quick links
 
-The search engine can be changed in `main.js`. Google is used by default, but other search engines can also be used.
+Sticky notes
+
+Current time/date and greeting
+
+Emoji profile
+
+Search Engines
+The search bar can be changed to any search engine by changing the search engine in main.js. The default search bar is set to Google but can be changed to other search engines as well. The following are the search engine links below:
+
 
 | Search Engine | Link                                 |
 | ------------- | ------------------------------------ |
