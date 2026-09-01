@@ -1,4 +1,4 @@
-## Space Pulse
+## SPACE PLUS
 Space Pulse is a custom new tab page built with the NASA Astronomy Picture of the Day API. Space Pulse gives a new tab more functionality while being more fun and engaging than a normal new tab. It has a search bar, quick links, sticky notes, and an emoji profile.
 
 # Motivation
