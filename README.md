@@ -1,18 +1,17 @@
-# MY TABS
+## Space Pulse
 Space Pulse is a custom new tab page built with the NASA Astronomy Picture of the Day API. Space Pulse gives a new tab more functionality while being more fun and engaging than a normal new tab. It has a search bar, quick links, sticky notes, and an emoji profile.
 
-## Motivation
+# Motivation
 I wanted to build this new tab page because I wanted something that was more engaging for a new tab but didn't sacrifice the beauty of a default new tab
 
-## Preview
-
-
+# Preview
 <img width="1451" height="885" alt="Screenshot 2026-08-28 121002" src="https://github.com/user-attachments/assets/18b2640d-ef22-4ef9-82f9-16aba99c9781" />
 <img width="1563" height="877" alt="Screenshot 2026-08-28 121025" src="https://github.com/user-attachments/assets/de1a395e-8861-4542-b7e4-47a36cab747e" />
 <img width="1335" height="852" alt="Screenshot 2026-08-28 121111" src="https://github.com/user-attachments/assets/e991f56d-429e-4ecd-a7cb-9a3de1b8cdd2" />
 
+
 # Features
-> NASA APOD
+NASA APOD
 
 Search bar
 
@@ -24,115 +23,110 @@ Current time/date and greeting
 
 Emoji profile
 
-Search Engines
+ # Search Engines
 The search bar can be changed to any search engine by changing the search engine in main.js. The default search bar is set to Google but can be changed to other search engines as well. The following are the search engine links below:
 
+| Search Engine | Link |
 
-| Search Engine | Link                                 |
-| ------------- | ------------------------------------ |
-| Google        | `https://www.google.com/search?q=`   |
-| DuckDuckGo    | `https://duckduckgo.com/?q=`         |
-| Bing          | `https://www.bing.com/search?q=`     |
-| Yahoo         | `https://search.yahoo.com/search?p=` |
-| Brave Search  | `https://search.brave.com/search?q=` |
+| Google | https://www.google.com/search?q= |
 
-## NASA APOD
+| DuckDuckGo | https://duckduckgo.com/?q= |
 
-The background of the new tab comes from NASA's Astronomy Picture of the Day API.
+| Bing | https://www.bing.com/search?q= |
 
-Every day, NASA provides a new space-related picture or video. If the APOD is a video, the page uses a default background image instead.
+| Yahoo | https://search.yahoo.com/search?p= |
 
-## Search
+| Brave Search | https://search.brave.com/search?q= |
 
-The search bar lets you search the web directly from the new tab. You can choose which search engine you want to use by changing the URL in `main.js`.
+# NASA APOD (Astronomy Picture of the Day)
+The current APOD from NASA is the background for this tab. The APOD can either be an image or a video. If the APOD is a video then a default picture is used for the tab's page.
 
-## Quick Links
+ # Search
+The search bar can search any search engine without having to open up another tab.
 
-Quick links are there for websites that I use often. Users can add the links they want so they can access them quickly from the new tab.
+ # Quick Links
+The quick links allow the user to type in any links they frequently visit.
 
-## Sticky Notes
+ # Sticky Notes
+The sticky notes allow the user to make, check off, edit, and delete notes.
 
-The sticky notes feature lets users create simple notes directly on the new tab.
+# Emoji Profile
+When first opening up the tab the user gets to choose what emoji they want and it saves the emoji in the browser.
 
-You can:
+# Technologies Used
+HTML
 
-* Add notes
-* Edit notes
-* Check notes off
-* Delete notes
+CSS
 
-The notes are saved in the browser, so they stay there when the page is opened again.
+JavaScript
 
-## Emoji Profile
+Vite
 
-When the page is opened for the first time, users can choose an emoji for their profile.
+NASA APOD API
 
-The selected emoji is saved using `localStorage`, so it doesn't need to be selected again every time the tab is opened.
+localStorage
 
-## Technologies Used
+# How To Run
+To run the project you need to do the following:
 
-* HTML
-* CSS
-* JavaScript
-* Vite
-* NASA APOD API
-* localStorage
+Clone the repo
 
-## How To Run
+Install the dependencies
 
-First, clone the repository and install the dependencies:
+Create a .env file in the project root
 
-```bash
+Add your NASA API key to the file
+
+Run the dev server
+
+An example of the steps 2-4 would be:
+
+
 npm install
-```
 
-Then create a `.env` file in the root of the project and add your NASA API key:
-
-```env
-VITE_NASA_API_KEY=your_api_key_here
-```
-
-After that, start the development server:
-
-```bash
 npm run dev
-```
 
-## Project Structure
+For the .env file:
 
-```text
+
+VITE_NASA_API_KEY=your_api_key_here
+
+For the repo structure there is:
+
+
 src/
+
 main.js
+
 style.css
+
 index.html
-```
 
-## What I Learned
+# What I Learned
+API usage
 
-While making this project, I learned more about:
+Local storage
 
-* Using APIs
-* Working with `localStorage`
-* Building a custom new tab page
-* Using JavaScript to make the page interactive
-* Working with Vite
+How to make a new tab page
 
-## Future Plans
+# What I Want To Add In The Future
+A Pomodoro timer
 
-There are a few things I would like to add in the future:
+More options for sticky notes
 
-* Pomodoro timer
-* More options for sticky notes
-* Weather
-* Custom themes
-* More options for quick links
+Weather
 
-## Credits
+Themes
 
-* NASA for the Astronomy Picture of the Day API
-* Hack Club Stardance for the challenge
-* My friends for testing the new tab page
+More options for quick links
 
-## License
+# Credits
+NASA for the APOD API
 
-This project is open source and is licensed under the MIT License. See the `LICENSE` file for more information.
+Hack Club Stardance for the challenge
+
+My friends for testing out the new tab
+
+# License
+This new tab page is open-sourced under the MIT License. Check the LICENSE file for more info
+
