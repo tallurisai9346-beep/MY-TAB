@@ -1,4 +1,3 @@
-
 import "./style.css";
 
 const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
@@ -618,3 +617,4 @@ document.addEventListener("DOMContentLoaded", function () {
   setupNotes();
   setupModals();
 });
+
