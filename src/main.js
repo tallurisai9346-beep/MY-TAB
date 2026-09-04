@@ -1,3 +1,4 @@
+
 import "./style.css";
 
 const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
@@ -21,9 +22,6 @@ const noteList = $("#sticky-notes");
 
 const fallbackImage =
   "https://images-assets.nasa.gov/image/PIA12348/PIA12348~orig.jpg";
-
-
-// Save and read data from the browser
 
 function getData(key, defaultValue) {
   try {
@@ -52,7 +50,7 @@ function formatDate(date) {
 }
 
 
-// Clock
+// ---------------- CLOCK ----------------
 
 function startClock() {
   const clock = $("#clock");
@@ -78,7 +76,7 @@ function startClock() {
 }
 
 
-// Search
+// ---------------- SEARCH ----------------
 
 function setupSearch() {
   const form = $("#search-form");
@@ -97,16 +95,16 @@ function setupSearch() {
       return;
     }
 
-    const searchUrl =
+    const url =
       "https://www.google.com/search?q=" +
       encodeURIComponent(searchText);
 
-    window.location.href = searchUrl;
+    window.location.href = url;
   });
 }
 
 
-// User profile
+// ---------------- PROFILE ----------------
 
 function loadProfile() {
   const profile = getData(PROFILE_KEY, {
@@ -178,7 +176,7 @@ function setupProfile() {
 }
 
 
-// Emoji picker
+// ---------------- EMOJI ----------------
 
 function setupEmojiPicker() {
   const openButton = $("#change-emoji");
@@ -213,7 +211,7 @@ function setupEmojiPicker() {
 }
 
 
-// NASA Astronomy Picture of the Day
+// ---------------- NASA APOD ----------------
 
 async function getApod(selectedDate = "") {
   if (!apodMedia) {
@@ -244,9 +242,7 @@ async function getApod(selectedDate = "") {
   }
 
   try {
-    const response = await fetch(
-      APOD_URL + "?" + params.toString()
-    );
+    const response = await fetch(APOD_URL + "?" + params.toString());
 
     if (!response.ok) {
       throw new Error("NASA request failed");
@@ -287,7 +283,6 @@ function displayApod(data) {
   if (apodDate) {
     if (data.date) {
       const date = new Date(data.date + "T00:00:00");
-
       apodDate.textContent = formatDate(date);
     } else {
       apodDate.textContent = "";
@@ -330,7 +325,6 @@ function displayApod(data) {
   apodMedia.innerHTML = `
     <div class="video-message">
       <p>This day's NASA content is a video.</p>
-
       <a
         href="${data.url}"
         target="_blank"
@@ -359,7 +353,7 @@ function setupApod() {
 }
 
 
-// Quick links
+// ---------------- QUICK LINKS ----------------
 
 function showLinks() {
   if (!linkList) {
@@ -423,13 +417,7 @@ function setupLinks() {
 
   showLinks();
 
-  if (
-    !addButton ||
-    !modal ||
-    !saveButton ||
-    !titleInput ||
-    !urlInput
-  ) {
+  if (!addButton || !modal || !saveButton) {
     return;
   }
 
@@ -470,7 +458,7 @@ function setupLinks() {
 }
 
 
-// Sticky notes
+// ---------------- STICKY NOTES ----------------
 
 function showNotes() {
   if (!noteList) {
@@ -521,10 +509,6 @@ function showNotes() {
       const notes = getData(NOTES_KEY, []);
 
       const index = Number(checkbox.dataset.note);
-
-      if (!notes[index]) {
-        return;
-      }
 
       notes[index].done = checkbox.checked;
 
@@ -593,7 +577,7 @@ function setupNotes() {
 }
 
 
-// Close popup windows
+// ---------------- MODALS ----------------
 
 function setupModals() {
   const closeButtons =
@@ -621,7 +605,7 @@ function setupModals() {
 }
 
 
-// Start the application
+// ---------------- START APP ----------------
 
 document.addEventListener("DOMContentLoaded", function () {
   startClock();
@@ -634,7 +618,3 @@ document.addEventListener("DOMContentLoaded", function () {
   setupNotes();
   setupModals();
 });
-
-
-
-
