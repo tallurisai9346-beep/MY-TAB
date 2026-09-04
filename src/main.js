@@ -22,6 +22,9 @@ const noteList = $("#sticky-notes");
 const fallbackImage =
   "https://images-assets.nasa.gov/image/PIA12348/PIA12348~orig.jpg";
 
+
+// Save and read data from the browser
+
 function getData(key, defaultValue) {
   try {
     const saved = localStorage.getItem(key);
@@ -49,7 +52,7 @@ function formatDate(date) {
 }
 
 
-// ---------------- CLOCK ----------------
+// Clock
 
 function startClock() {
   const clock = $("#clock");
@@ -75,7 +78,7 @@ function startClock() {
 }
 
 
-// ---------------- SEARCH ----------------
+// Search
 
 function setupSearch() {
   const form = $("#search-form");
@@ -94,16 +97,16 @@ function setupSearch() {
       return;
     }
 
-    const url =
+    const searchUrl =
       "https://www.google.com/search?q=" +
       encodeURIComponent(searchText);
 
-    window.location.href = url;
+    window.location.href = searchUrl;
   });
 }
 
 
-// ---------------- PROFILE ----------------
+// User profile
 
 function loadProfile() {
   const profile = getData(PROFILE_KEY, {
@@ -175,7 +178,7 @@ function setupProfile() {
 }
 
 
-// ---------------- EMOJI ----------------
+// Emoji picker
 
 function setupEmojiPicker() {
   const openButton = $("#change-emoji");
@@ -210,7 +213,7 @@ function setupEmojiPicker() {
 }
 
 
-// ---------------- NASA APOD ----------------
+// NASA Astronomy Picture of the Day
 
 async function getApod(selectedDate = "") {
   if (!apodMedia) {
@@ -241,7 +244,9 @@ async function getApod(selectedDate = "") {
   }
 
   try {
-    const response = await fetch(APOD_URL + "?" + params.toString());
+    const response = await fetch(
+      APOD_URL + "?" + params.toString()
+    );
 
     if (!response.ok) {
       throw new Error("NASA request failed");
@@ -282,6 +287,7 @@ function displayApod(data) {
   if (apodDate) {
     if (data.date) {
       const date = new Date(data.date + "T00:00:00");
+
       apodDate.textContent = formatDate(date);
     } else {
       apodDate.textContent = "";
@@ -324,6 +330,7 @@ function displayApod(data) {
   apodMedia.innerHTML = `
     <div class="video-message">
       <p>This day's NASA content is a video.</p>
+
       <a
         href="${data.url}"
         target="_blank"
@@ -352,7 +359,7 @@ function setupApod() {
 }
 
 
-// ---------------- QUICK LINKS ----------------
+// Quick links
 
 function showLinks() {
   if (!linkList) {
@@ -416,7 +423,13 @@ function setupLinks() {
 
   showLinks();
 
-  if (!addButton || !modal || !saveButton) {
+  if (
+    !addButton ||
+    !modal ||
+    !saveButton ||
+    !titleInput ||
+    !urlInput
+  ) {
     return;
   }
 
@@ -457,7 +470,7 @@ function setupLinks() {
 }
 
 
-// ---------------- STICKY NOTES ----------------
+// Sticky notes
 
 function showNotes() {
   if (!noteList) {
@@ -508,6 +521,10 @@ function showNotes() {
       const notes = getData(NOTES_KEY, []);
 
       const index = Number(checkbox.dataset.note);
+
+      if (!notes[index]) {
+        return;
+      }
 
       notes[index].done = checkbox.checked;
 
@@ -576,7 +593,7 @@ function setupNotes() {
 }
 
 
-// ---------------- MODALS ----------------
+// Close popup windows
 
 function setupModals() {
   const closeButtons =
@@ -604,7 +621,7 @@ function setupModals() {
 }
 
 
-// ---------------- START APP ----------------
+// Start the application
 
 document.addEventListener("DOMContentLoaded", function () {
   startClock();
@@ -617,4 +634,3 @@ document.addEventListener("DOMContentLoaded", function () {
   setupNotes();
   setupModals();
 });
-
