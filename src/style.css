@@ -1,454 +1,619 @@
-:root {
-  --bg: #060816;
-  --panel: #0e1324;
-  --panel-2: #11182d;
-  --line: rgba(148, 163, 184, 0.16);
-  --text: #e8ecf7;
-  --muted: #95a2bf;
-  --accent: #7c9cff;
-  --accent-2: #4dd8c8;
-  --warning: #ffcc66;
-  --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-  --radius: 18px;
-}
+import "./style.css";
 
-* {
-  box-sizing: border-box;
-}
+const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
 
-html, body {
-  min-height: 100%;
-}
+const APOD_URL = "https://api.nasa.gov/planetary/apod";
+const PROFILE_KEY = "cosmotab-user-profile";
+const LINKS_KEY = "cosmotab-links";
+const NOTES_KEY = "cosmotab-todos";
 
-body {
-  margin: 0;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at 20% 10%, rgba(124, 156, 255, 0.16), transparent 24%),
-    radial-gradient(circle at 80% 20%, rgba(77, 216, 200, 0.12), transparent 20%),
-    linear-gradient(180deg, #050712 0%, #060816 45%, #050712 100%);
-  color: var(--text);
-  overflow-x: hidden;
-}
+const $ = (selector) => document.querySelector(selector);
 
-#app {
-  min-height: 100vh;
-  padding: 24px;
-}
+const apodMedia = $("#apod-media");
+const apodTitle = $("#apod-title");
+const apodDate = $("#apod-date");
+const apodText = $("#apod-explanation");
+const dateInput = $("#apod-date-picker");
+const fetchButton = $("#fetch-apod");
 
-.main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+const linkList = $("#quick-links");
+const noteList = $("#sticky-notes");
 
-.user-welcome {
-  padding: 22px 20px;
-  background: linear-gradient(180deg, rgba(17, 24, 45, 0.92), rgba(14, 19, 36, 0.92));
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  text-align: center;
-}
+const fallbackImage =
+  "https://images-assets.nasa.gov/image/PIA12348/PIA12348~orig.jpg";
 
-.user-welcome h2 {
-  margin: 0;
-  font-size: 2rem;
-  letter-spacing: -0.03em;
-}
+function getData(key, defaultValue) {
+  try {
+    const saved = localStorage.getItem(key);
 
-.user-welcome p {
-  margin: 8px 0 0;
-  color: var(--muted);
-}
-
-.datetime {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 10px;
-  color: #b8c2dd;
-  font-size: 0.95rem;
-}
-
-.avatar-emoji {
-  margin-top: 10px;
-  font-size: 2.6rem;
-}
-
-.pulse-bar {
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
-  opacity: 0.9;
-}
-
-.search-form {
-  display: flex;
-  gap: 10px;
-  width: min(920px, 100%);
-  margin: 0 auto;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 0;
-  padding: 14px 18px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(14, 19, 36, 0.95);
-  color: var(--text);
-  outline: none;
-  box-shadow: var(--shadow);
-}
-
-.search-input::placeholder {
-  color: var(--muted);
-}
-
-.search-input:focus {
-  border-color: rgba(124, 156, 255, 0.5);
-}
-
-.search-button {
-  padding: 14px 18px;
-  border: 1px solid rgba(124, 156, 255, 0.25);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #7c9cff, #627ff0);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.links-section {
-  background: linear-gradient(180deg, rgba(17, 24, 45, 0.92), rgba(14, 19, 36, 0.92));
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px;
-  box-shadow: var(--shadow);
-}
-
-.links-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.links-header h2 {
-  margin: 0;
-  font-size: 1rem;
-  color: #dbe3ff;
-}
-
-.icon-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: #121a32;
-  color: var(--text);
-  cursor: pointer;
-}
-.link-chip a {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 500;
-}
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.link-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: #10172d;
-  color: var(--text);
-  text-decoration: none;
-}
-.search-button:hover,
-#apod-refresh-btn:hover,
-.icon-button:hover,
-.modal-actions button:hover,
-.sticky-note-buttons button:hover,
-.link-chip:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.search-button,
-#apod-refresh-btn,
-.icon-button,
-.modal-actions button,
-.sticky-note-buttons button,
-.link-chip {
-  transition: transform 0.15s ease, filter 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.apod-notes-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
-  gap: 20px;
-  align-items: start;
-}
-
-.apod-section,
-.notes-section .todo {
-  background: linear-gradient(180deg, rgba(17, 24, 45, 0.92), rgba(14, 19, 36, 0.92));
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.apod-section {
-  padding: 18px;
-}
-
-.site-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.site-header p {
-  margin: 6px 0 0;
-  color: var(--muted);
-}
-
-.apod-layout {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.media-container {
-  min-height: 280px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #0a0f1f;
-  border: 1px solid var(--line);
-}
-
-.apod-image,
-.apod-video {
-  width: 100%;
-  display: block;
-  border: 0;
-}
-
-.apod-image {
-  object-fit: cover;
-}
-
-.apod-video {
-  min-height: 320px;
-}
-
-.apod-info h2 {
-  margin-top: 0;
-  margin-bottom: 6px;
-  font-size: 1.2rem;
-}
-
-.apod-date {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.apod-explanation {
-  margin: 0;
-  color: #d6dcec;
-  line-height: 1.65;
-  max-height: 250px;
-  overflow: auto;
-}
-
-.apod-controls {
-  margin-top: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.apod-controls input[type="date"] {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #0b1020;
-  color: var(--text);
-}
-
-#apod-refresh-btn {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(124, 156, 255, 0.25);
-  background: #121a32;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.notes-section .todo {
-  padding: 18px;
-}
-
-.notes-section .todo h2 {
-  margin: 0 0 12px;
-  font-size: 1rem;
-}
-
-#todo-form {
-  margin-bottom: 12px;
-}
-
-#todo-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: #0b1020;
-  color: var(--text);
-  outline: none;
-}
-
-.todo-grid {
-  display: grid;
-  gap: 12px;
-}.sticky-note {
-  border-radius: 16px;
-  padding: 14px;
-  min-height: 132px;
-  background: #f7d96a;
-  color: #1d1d16;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.sticky-note.done {
-  opacity: 0.8;
-}
-
-.sticky-note-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.sticky-note-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-  font-size: 0.78rem;
-}
-
-.sticky-note-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.sticky-note-buttons button {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  color: #3a3a30;
-}
-.modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(4, 6, 12, 0.72);
-  z-index: 100;
-}
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-content {
-  width: min(92vw, 380px);
-  padding: 20px;
-  border-radius: 18px;
-  background: #0f1529;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
-
-.modal-content h3 {
-  margin-top: 0;
-}
-
-.modal-content label {
-  display: block;
-  margin-bottom: 12px;
-  color: #d7def1;
-}
-
-.modal-content input,
-.modal-content select {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #0b1020;
-  color: var(--text);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.modal-actions button {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 0;
-  cursor: pointer;
-}
-
-#link-save,
-#user-setup-save {
-  background: var(--accent);
-  color: white;
-}
-
-#link-cancel {
-  background: #20283f;
-  color: var(--text);
-}
-
-@media (max-width: 980px) {
-  .apod-notes-row,
-  .apod-layout {
-    grid-template-columns: 1fr;
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.log("Could not read saved data:", error);
   }
 
-  .search-form {
-    flex-direction: column;
+  return defaultValue;
+}
+
+function saveData(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function formatDate(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(date);
+}
+
+
+// ---------------- CLOCK ----------------
+
+function startClock() {
+  const clock = $("#clock");
+  const today = $("#today");
+
+  function updateTime() {
+    const now = new Date();
+
+    if (clock) {
+      clock.textContent = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    if (today) {
+      today.textContent = formatDate(now);
+    }
+  }
+
+  updateTime();
+  setInterval(updateTime, 1000);
+}
+
+
+// ---------------- SEARCH ----------------
+
+function setupSearch() {
+  const form = $("#search-form");
+  const input = $("#search-input");
+
+  if (!form || !input) {
+    return;
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const searchText = input.value.trim();
+
+    if (searchText === "") {
+      return;
+    }
+
+    const url =
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(searchText);
+
+    window.location.href = url;
+  });
+}
+
+
+// ---------------- PROFILE ----------------
+
+function loadProfile() {
+  const profile = getData(PROFILE_KEY, {
+    name: "Explorer",
+    emoji: "🚀"
+  });
+
+  const name = $("#user-name");
+  const avatar = $("#user-avatar");
+  const greeting = $("#greeting");
+
+  if (name) {
+    name.textContent = profile.name;
+  }
+
+  if (avatar) {
+    avatar.textContent = profile.emoji;
+  }
+
+  if (greeting) {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      greeting.textContent = "Good morning";
+    } else if (hour < 18) {
+      greeting.textContent = "Good afternoon";
+    } else {
+      greeting.textContent = "Good evening";
+    }
   }
 }
 
-@media (max-width: 640px) {
-  #app {
-    padding: 14px;
+function setupProfile() {
+  const editButton = $("#edit-profile");
+  const nameInput = $("#name-input");
+  const saveButton = $("#save-profile");
+  const modal = $("#profile-modal");
+
+  if (!editButton || !nameInput || !saveButton || !modal) {
+    return;
   }
 
-  .user-welcome h2 {
-    font-size: 1.5rem;
-  }
+  editButton.addEventListener("click", function () {
+    const profile = getData(PROFILE_KEY, {
+      name: "Explorer",
+      emoji: "🚀"
+    });
+
+    nameInput.value = profile.name;
+    modal.classList.add("show");
+  });
+
+  saveButton.addEventListener("click", function () {
+    const newName = nameInput.value.trim();
+
+    const profile = getData(PROFILE_KEY, {
+      name: "Explorer",
+      emoji: "🚀"
+    });
+
+    profile.name = newName || "Explorer";
+
+    saveData(PROFILE_KEY, profile);
+
+    modal.classList.remove("show");
+
+    loadProfile();
+  });
 }
+
+
+// ---------------- EMOJI ----------------
+
+function setupEmojiPicker() {
+  const openButton = $("#change-emoji");
+  const modal = $("#emoji-modal");
+
+  if (!openButton || !modal) {
+    return;
+  }
+
+  const emojiButtons = modal.querySelectorAll("[data-emoji]");
+
+  openButton.addEventListener("click", function () {
+    modal.classList.add("show");
+  });
+
+  emojiButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const profile = getData(PROFILE_KEY, {
+        name: "Explorer",
+        emoji: "🚀"
+      });
+
+      profile.emoji = button.dataset.emoji;
+
+      saveData(PROFILE_KEY, profile);
+
+      modal.classList.remove("show");
+
+      loadProfile();
+    });
+  });
+}
+
+
+// ---------------- NASA APOD ----------------
+
+async function getApod(selectedDate = "") {
+  if (!apodMedia) {
+    return;
+  }
+
+  apodMedia.classList.add("loading");
+
+  if (apodTitle) {
+    apodTitle.textContent = "Loading today's picture...";
+  }
+
+  if (apodDate) {
+    apodDate.textContent = "";
+  }
+
+  if (apodText) {
+    apodText.textContent = "";
+  }
+
+  const params = new URLSearchParams();
+
+  params.set("api_key", NASA_KEY);
+  params.set("thumbs", "true");
+
+  if (selectedDate) {
+    params.set("date", selectedDate);
+  }
+
+  try {
+    const response = await fetch(APOD_URL + "?" + params.toString());
+
+    if (!response.ok) {
+      throw new Error("NASA request failed");
+    }
+
+    const data = await response.json();
+
+    displayApod(data);
+  } catch (error) {
+    console.log("NASA picture could not be loaded:", error);
+
+    if (apodTitle) {
+      apodTitle.textContent = "NASA picture is unavailable";
+    }
+
+    if (apodText) {
+      apodText.textContent =
+        "The NASA picture could not be loaded right now. Please try again.";
+    }
+
+    apodMedia.innerHTML = `
+      <img
+        src="${fallbackImage}"
+        alt="NASA space image"
+      >
+    `;
+  }
+
+  apodMedia.classList.remove("loading");
+}
+
+function displayApod(data) {
+  if (apodTitle) {
+    apodTitle.textContent =
+      data.title || "Astronomy Picture of the Day";
+  }
+
+  if (apodDate) {
+    if (data.date) {
+      const date = new Date(data.date + "T00:00:00");
+      apodDate.textContent = formatDate(date);
+    } else {
+      apodDate.textContent = "";
+    }
+  }
+
+  if (apodText) {
+    apodText.textContent =
+      data.explanation || "No description is available.";
+  }
+
+  if (data.media_type === "image") {
+    apodMedia.innerHTML = `
+      <img
+        src="${data.url}"
+        alt="${data.title || "NASA Astronomy Picture"}"
+      >
+    `;
+
+    return;
+  }
+
+  if (data.thumbnail_url) {
+    apodMedia.innerHTML = `
+      <a
+        href="${data.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="${data.thumbnail_url}"
+          alt="${data.title || "NASA video"}"
+        >
+      </a>
+    `;
+
+    return;
+  }
+
+  apodMedia.innerHTML = `
+    <div class="video-message">
+      <p>This day's NASA content is a video.</p>
+      <a
+        href="${data.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Watch video
+      </a>
+    </div>
+  `;
+}
+
+function setupApod() {
+  if (!dateInput || !fetchButton) {
+    return;
+  }
+
+  const today = new Date();
+
+  dateInput.max = today.toISOString().split("T")[0];
+
+  getApod();
+
+  fetchButton.addEventListener("click", function () {
+    getApod(dateInput.value);
+  });
+}
+
+
+// ---------------- QUICK LINKS ----------------
+
+function showLinks() {
+  if (!linkList) {
+    return;
+  }
+
+  const links = getData(LINKS_KEY, []);
+
+  linkList.innerHTML = "";
+
+  links.forEach(function (link, index) {
+    const item = document.createElement("div");
+
+    item.className = "quick-link";
+
+    item.innerHTML = `
+      <a
+        href="${link.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span>${link.title}</span>
+      </a>
+
+      <button
+        class="link-delete"
+        data-index="${index}"
+        aria-label="Delete link"
+      >
+        ×
+      </button>
+    `;
+
+    linkList.appendChild(item);
+  });
+
+  const deleteButtons =
+    linkList.querySelectorAll(".link-delete");
+
+  deleteButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const links = getData(LINKS_KEY, []);
+
+      const index = Number(button.dataset.index);
+
+      links.splice(index, 1);
+
+      saveData(LINKS_KEY, links);
+
+      showLinks();
+    });
+  });
+}
+
+function setupLinks() {
+  const addButton = $("#add-link");
+  const modal = $("#link-modal");
+  const saveButton = $("#save-link");
+  const titleInput = $("#link-title");
+  const urlInput = $("#link-url");
+
+  showLinks();
+
+  if (!addButton || !modal || !saveButton) {
+    return;
+  }
+
+  addButton.addEventListener("click", function () {
+    titleInput.value = "";
+    urlInput.value = "";
+
+    modal.classList.add("show");
+
+    titleInput.focus();
+  });
+
+  saveButton.addEventListener("click", function () {
+    const title = titleInput.value.trim();
+    let url = urlInput.value.trim();
+
+    if (!title || !url) {
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = "https://" + url;
+    }
+
+    const links = getData(LINKS_KEY, []);
+
+    links.push({
+      title: title,
+      url: url
+    });
+
+    saveData(LINKS_KEY, links);
+
+    modal.classList.remove("show");
+
+    showLinks();
+  });
+}
+
+
+// ---------------- STICKY NOTES ----------------
+
+function showNotes() {
+  if (!noteList) {
+    return;
+  }
+
+  const notes = getData(NOTES_KEY, []);
+
+  noteList.innerHTML = "";
+
+  notes.forEach(function (note, index) {
+    const item = document.createElement("div");
+
+    item.className = "sticky-note";
+
+    if (note.done) {
+      item.classList.add("done");
+    }
+
+    item.innerHTML = `
+      <label>
+        <input
+          type="checkbox"
+          data-note="${index}"
+          ${note.done ? "checked" : ""}
+        >
+
+        <span>${note.text}</span>
+      </label>
+
+      <button
+        class="note-delete"
+        data-delete="${index}"
+        aria-label="Delete note"
+      >
+        ×
+      </button>
+    `;
+
+    noteList.appendChild(item);
+  });
+
+  const checkboxes =
+    noteList.querySelectorAll("[data-note]");
+
+  checkboxes.forEach(function (checkbox) {
+    checkbox.addEventListener("change", function () {
+      const notes = getData(NOTES_KEY, []);
+
+      const index = Number(checkbox.dataset.note);
+
+      notes[index].done = checkbox.checked;
+
+      saveData(NOTES_KEY, notes);
+
+      showNotes();
+    });
+  });
+
+  const deleteButtons =
+    noteList.querySelectorAll("[data-delete]");
+
+  deleteButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const notes = getData(NOTES_KEY, []);
+
+      const index = Number(button.dataset.delete);
+
+      notes.splice(index, 1);
+
+      saveData(NOTES_KEY, notes);
+
+      showNotes();
+    });
+  });
+}
+
+function setupNotes() {
+  const input = $("#note-input");
+  const addButton = $("#add-note");
+
+  showNotes();
+
+  if (!input || !addButton) {
+    return;
+  }
+
+  function addNote() {
+    const text = input.value.trim();
+
+    if (!text) {
+      return;
+    }
+
+    const notes = getData(NOTES_KEY, []);
+
+    notes.push({
+      text: text,
+      done: false
+    });
+
+    saveData(NOTES_KEY, notes);
+
+    input.value = "";
+
+    showNotes();
+  }
+
+  addButton.addEventListener("click", addNote);
+
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      addNote();
+    }
+  });
+}
+
+
+// ---------------- MODALS ----------------
+
+function setupModals() {
+  const closeButtons =
+    document.querySelectorAll("[data-close-modal]");
+
+  closeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const modal = button.closest(".modal");
+
+      if (modal) {
+        modal.classList.remove("show");
+      }
+    });
+  });
+
+  const modals = document.querySelectorAll(".modal");
+
+  modals.forEach(function (modal) {
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) {
+        modal.classList.remove("show");
+      }
+    });
+  });
+}
+
+
+// ---------------- START APP ----------------
+
+document.addEventListener("DOMContentLoaded", function () {
+  startClock();
+  setupSearch();
+  loadProfile();
+  setupProfile();
+  setupEmojiPicker();
+  setupApod();
+  setupLinks();
+  setupNotes();
+  setupModals();
+});
