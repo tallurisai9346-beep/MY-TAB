@@ -1,520 +1,619 @@
 import "./style.css";
 
-const API_KEY = import.meta.env.VITE_NASA_API_KEY;
+const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
 
-const titleEl = document.getElementById("apod-title");
-const dateEl = document.getElementById("apod-date");
-const explanationEl = document.getElementById("apod-explanation");
-const mediaContainer = document.getElementById("apod-media-container");
-const dateInput = document.getElementById("apod-date-input");
-const refreshBtn = document.getElementById("apod-refresh-btn");
-const appRoot = document.getElementById("app");
+const APOD_URL = "https://api.nasa.gov/planetary/apod";
+const PROFILE_KEY = "cosmotab-user-profile";
+const LINKS_KEY = "cosmotab-links";
+const NOTES_KEY = "cosmotab-todos";
 
-const USER_PROFILE_KEY = "cosmotab-user-profile";
-const LINKS_STORAGE_KEY = "cosmotab-links";
-const TODO_STORAGE_KEY = "cosmotab-todos";
+const $ = (selector) => document.querySelector(selector);
 
-const DEFAULT_BG_IMAGE = "https://apod.nasa.gov/apod/image/1905/M94_Hubble_960.jpg";
+const apodMedia = $("#apod-media");
+const apodTitle = $("#apod-title");
+const apodDate = $("#apod-date");
+const apodText = $("#apod-explanation");
+const dateInput = $("#apod-date-picker");
+const fetchButton = $("#fetch-apod");
 
-function $(id) {
-  return document.getElementById(id);
+const linkList = $("#quick-links");
+const noteList = $("#sticky-notes");
+
+const fallbackImage =
+  "https://images-assets.nasa.gov/image/PIA12348/PIA12348~orig.jpg";
+
+function getData(key, defaultValue) {
+  try {
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.log("Could not read saved data:", error);
+  }
+
+  return defaultValue;
+}
+
+function saveData(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 function formatDate(date) {
-  return date.toISOString().split("T")[0];
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(date);
 }
 
-function setLoading(isLoading) {
-  if (!appRoot) return;
-  appRoot.dataset.loading = isLoading ? "true" : "false";
-}
 
-function setBackground(imageUrl) {
-  document.body.style.backgroundImage = `linear-gradient(rgba(5, 7, 18, 0.36), rgba(5, 7, 18, 0.36)), url("${imageUrl}")`;
-  document.body.style.backgroundSize = "cover";
-  document.body.style.backgroundPosition = "center";
-  document.body.style.backgroundAttachment = "fixed";
-}
+// ---------------- CLOCK ----------------
 
-function loadUserProfile() {
-  try {
-    return JSON.parse(localStorage.getItem(USER_PROFILE_KEY)) || null;
-  } catch {
-    return null;
-  }
-}
+function startClock() {
+  const clock = $("#clock");
+  const today = $("#today");
 
-function saveUserProfile(profile) {
-  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
-}
-
-function applyAvatarEmoji(profile) {
-  const emojiEl = $("avatar-emoji");
-  if (!emojiEl) return;
-  emojiEl.textContent = profile?.emoji || "🚀";
-}
-
-function updateGreetingAndFocus() {
-  const now = new Date();
-  const hour = now.getHours();
-
-  let baseGreeting = "Good evening";
-  if (hour < 5) baseGreeting = "Good night";
-  else if (hour < 12) baseGreeting = "Good morning";
-  else if (hour < 18) baseGreeting = "Good afternoon";
-
-  const profile = loadUserProfile();
-  const emoji = profile?.emoji || "🚀";
-
-  const greetingEl = $("greeting");
-  if (greetingEl) greetingEl.textContent = `${emoji} ${baseGreeting}`;
-
-  const focusEl = $("focus");
-  if (focusEl) focusEl.textContent = "Search the web, save links, and manage notes.";
-}
-
-function setupClockGreeting() {
-  const clockEl = $("clock");
-  const dateDisplayEl = $("date");
-
-  function updateClockAndDate() {
+  function updateTime() {
     const now = new Date();
 
-    if (clockEl) {
-      clockEl.textContent = now.toLocaleTimeString([], {
+    if (clock) {
+      clock.textContent = now.toLocaleTimeString([], {
         hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+        minute: "2-digit"
       });
     }
 
-    if (dateDisplayEl) {
-      dateDisplayEl.textContent = now.toLocaleDateString([], {
-        weekday: "short",
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
+    if (today) {
+      today.textContent = formatDate(now);
     }
   }
 
-  updateClockAndDate();
-  updateGreetingAndFocus();
-  setInterval(updateClockAndDate, 1000);
-  setInterval(updateGreetingAndFocus, 60000);
+  updateTime();
+  setInterval(updateTime, 1000);
 }
 
-function maybeShowUserSetup() {
-  const profile = loadUserProfile();
-  const modal = $("user-setup-modal");
-  const emojiButtons = document.querySelectorAll(".emoji-btn");
 
-  if (!modal || emojiButtons.length === 0) return;
-
-  if (!profile) {
-    modal.classList.remove("hidden");
-    emojiButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const emoji = btn.dataset.emoji;
-        if (!emoji) return;
-        const newProfile = { emoji };
-        saveUserProfile(newProfile);
-        modal.classList.add("hidden");
-        applyAvatarEmoji(newProfile);
-        updateGreetingAndFocus();
-      });
-    });
-  } else {
-    applyAvatarEmoji(profile);
-  }
-}
-
-async function fetchApod(dateString) {
-  try {
-    setLoading(true);
-    if (titleEl) titleEl.textContent = "Loading NASA APOD...";
-    if (explanationEl) explanationEl.textContent = "";
-    if (mediaContainer) mediaContainer.innerHTML = "";
-
-  const url = new URL("https://api.nasa.gov/planetary/apod");
-url.searchParams.set("api_key", API_KEY || "DEMO_KEY");
-url.searchParams.set("thumbs", "true");
-if (dateString) url.searchParams.set("date", dateString);
-
-    const res = await fetch(url.toString());
-    if (!res.ok) throw new Error(`NASA API error: ${res.status}`);
-
-    const data = await res.json();
-    renderApod(data);
-  } catch (err) {
-    console.error(err);
-    if (titleEl) titleEl.textContent = "Error loading APOD";
-    if (dateEl) dateEl.textContent = "";
-    if (explanationEl) explanationEl.textContent = "Please check your network or try again later.";
-    if (mediaContainer) mediaContainer.innerHTML = "";
-    setBackground(DEFAULT_BG_IMAGE);
-  } finally {
-    setLoading(false);
-  }
-}
-
-function renderApod(data) {
-  const {
-    title,
-    date,
-    explanation,
-    media_type,
-    url,
-    hdurl,
-    thumbnail_url
-  } = data;
-
-  if (titleEl) titleEl.textContent = title || "NASA Astronomy Picture of the Day";
-  if (dateEl) dateEl.textContent = date || "";
-  if (explanationEl) explanationEl.textContent = explanation || "";
-  if (mediaContainer) mediaContainer.innerHTML = "";
-
-  let imageUrl = "";
-
-  if (media_type === "image") {
-    imageUrl = hdurl || url;
-  } else if (media_type === "video") {
-    imageUrl = thumbnail_url || "";
-  }
-
-  if (imageUrl) {
-    setBackground(imageUrl);
-  } else {
-    setBackground(DEFAULT_BG_IMAGE);
-  }
-
-  if (!mediaContainer) return;
-
-  if (imageUrl) {
-    const img = document.createElement("img");
-
-    img.src = imageUrl;
-    img.alt = title || "NASA Astronomy Picture of the Day";
-    img.className = "apod-image";
-    img.loading = "lazy";
-
-    mediaContainer.appendChild(img);
-  } else {
-    mediaContainer.textContent = "";
-  }
-}
-
-function setupControls() {
-  const today = new Date();
-  const todayStr = formatDate(today);
-
-  if (dateInput) {
-    dateInput.max = todayStr;
-    dateInput.value = todayStr;
-    dateInput.addEventListener("change", () => {
-      fetchApod(dateInput.value || todayStr);
-    });
-  }
-
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => {
-      const value = dateInput?.value || todayStr;
-      fetchApod(value);
-    });
-  }
-}
+// ---------------- SEARCH ----------------
 
 function setupSearch() {
-  const form = $("search-form");
-  const input = $("search-input");
-  if (!form || !input) return;
+  const form = $("#search-form");
+  const input = $("#search-input");
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const query = input.value.trim();
-    if (!query) return;
-    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  if (!form || !input) {
+    return;
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const searchText = input.value.trim();
+
+    if (searchText === "") {
+      return;
+    }
+
+    const url =
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(searchText);
+
+    window.location.href = url;
   });
 }
 
-function loadLinks() {
-  try {
-    return JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY)) || [];
-  } catch {
-    return [];
+
+// ---------------- PROFILE ----------------
+
+function loadProfile() {
+  const profile = getData(PROFILE_KEY, {
+    name: "Explorer",
+    emoji: "🚀"
+  });
+
+  const name = $("#user-name");
+  const avatar = $("#user-avatar");
+  const greeting = $("#greeting");
+
+  if (name) {
+    name.textContent = profile.name;
+  }
+
+  if (avatar) {
+    avatar.textContent = profile.emoji;
+  }
+
+  if (greeting) {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      greeting.textContent = "Good morning";
+    } else if (hour < 18) {
+      greeting.textContent = "Good afternoon";
+    } else {
+      greeting.textContent = "Good evening";
+    }
   }
 }
 
-function saveLinks(links) {
-  localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(links));
-}
+function setupProfile() {
+  const editButton = $("#edit-profile");
+  const nameInput = $("#name-input");
+  const saveButton = $("#save-profile");
+  const modal = $("#profile-modal");
 
-function renderLinks(links) {
-  const container = $("links");
-  if (!container) return;
+  if (!editButton || !nameInput || !saveButton || !modal) {
+    return;
+  }
 
-  container.innerHTML = "";
-
-  links.forEach((link, index) => {
-    const chip = document.createElement("div");
-    chip.className = "link-chip";
-
-    const a = document.createElement("a");
-    a.href = link.url;
-    a.target = "_blank";
-    a.rel = "noreferrer";
-    a.textContent = link.name;
-
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.textContent = "✎";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "✕";
-
-    editBtn.addEventListener("click", () => openLinkModal("edit", links, index));
-    deleteBtn.addEventListener("click", () => {
-      links.splice(index, 1);
-      saveLinks(links);
-      renderLinks(links);
+  editButton.addEventListener("click", function () {
+    const profile = getData(PROFILE_KEY, {
+      name: "Explorer",
+      emoji: "🚀"
     });
 
-    chip.appendChild(a);
-    chip.appendChild(editBtn);
-    chip.appendChild(deleteBtn);
-    container.appendChild(chip);
+    nameInput.value = profile.name;
+    modal.classList.add("show");
+  });
+
+  saveButton.addEventListener("click", function () {
+    const newName = nameInput.value.trim();
+
+    const profile = getData(PROFILE_KEY, {
+      name: "Explorer",
+      emoji: "🚀"
+    });
+
+    profile.name = newName || "Explorer";
+
+    saveData(PROFILE_KEY, profile);
+
+    modal.classList.remove("show");
+
+    loadProfile();
   });
 }
 
-let currentLinkMode = "add";
-let currentLinkIndex = null;
 
-function openLinkModal(mode, links, index = null) {
-  currentLinkMode = mode;
-  currentLinkIndex = index;
+// ---------------- EMOJI ----------------
 
-  const modal = $("link-modal");
-  const title = $("link-modal-title");
-  const nameInput = $("link-name");
-  const urlInput = $("link-url");
+function setupEmojiPicker() {
+  const openButton = $("#change-emoji");
+  const modal = $("#emoji-modal");
 
-  if (!modal || !title || !nameInput || !urlInput) return;
-
-  if (mode === "edit" && index != null) {
-    title.textContent = "Edit Quick Link";
-    nameInput.value = links[index].name;
-    urlInput.value = links[index].url;
-  } else {
-    title.textContent = "Add Quick Link";
-    nameInput.value = "";
-    urlInput.value = "";
+  if (!openButton || !modal) {
+    return;
   }
 
-  modal.classList.remove("hidden");
-  nameInput.focus();
+  const emojiButtons = modal.querySelectorAll("[data-emoji]");
+
+  openButton.addEventListener("click", function () {
+    modal.classList.add("show");
+  });
+
+  emojiButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const profile = getData(PROFILE_KEY, {
+        name: "Explorer",
+        emoji: "🚀"
+      });
+
+      profile.emoji = button.dataset.emoji;
+
+      saveData(PROFILE_KEY, profile);
+
+      modal.classList.remove("show");
+
+      loadProfile();
+    });
+  });
 }
 
-function closeLinkModal() {
-  const modal = $("link-modal");
-  if (modal) modal.classList.add("hidden");
+
+// ---------------- NASA APOD ----------------
+
+async function getApod(selectedDate = "") {
+  if (!apodMedia) {
+    return;
+  }
+
+  apodMedia.classList.add("loading");
+
+  if (apodTitle) {
+    apodTitle.textContent = "Loading today's picture...";
+  }
+
+  if (apodDate) {
+    apodDate.textContent = "";
+  }
+
+  if (apodText) {
+    apodText.textContent = "";
+  }
+
+  const params = new URLSearchParams();
+
+  params.set("api_key", NASA_KEY);
+  params.set("thumbs", "true");
+
+  if (selectedDate) {
+    params.set("date", selectedDate);
+  }
+
+  try {
+    const response = await fetch(APOD_URL + "?" + params.toString());
+
+    if (!response.ok) {
+      throw new Error("NASA request failed");
+    }
+
+    const data = await response.json();
+
+    displayApod(data);
+  } catch (error) {
+    console.log("NASA picture could not be loaded:", error);
+
+    if (apodTitle) {
+      apodTitle.textContent = "NASA picture is unavailable";
+    }
+
+    if (apodText) {
+      apodText.textContent =
+        "The NASA picture could not be loaded right now. Please try again.";
+    }
+
+    apodMedia.innerHTML = `
+      <img
+        src="${fallbackImage}"
+        alt="NASA space image"
+      >
+    `;
+  }
+
+  apodMedia.classList.remove("loading");
+}
+
+function displayApod(data) {
+  if (apodTitle) {
+    apodTitle.textContent =
+      data.title || "Astronomy Picture of the Day";
+  }
+
+  if (apodDate) {
+    if (data.date) {
+      const date = new Date(data.date + "T00:00:00");
+      apodDate.textContent = formatDate(date);
+    } else {
+      apodDate.textContent = "";
+    }
+  }
+
+  if (apodText) {
+    apodText.textContent =
+      data.explanation || "No description is available.";
+  }
+
+  if (data.media_type === "image") {
+    apodMedia.innerHTML = `
+      <img
+        src="${data.url}"
+        alt="${data.title || "NASA Astronomy Picture"}"
+      >
+    `;
+
+    return;
+  }
+
+  if (data.thumbnail_url) {
+    apodMedia.innerHTML = `
+      <a
+        href="${data.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="${data.thumbnail_url}"
+          alt="${data.title || "NASA video"}"
+        >
+      </a>
+    `;
+
+    return;
+  }
+
+  apodMedia.innerHTML = `
+    <div class="video-message">
+      <p>This day's NASA content is a video.</p>
+      <a
+        href="${data.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Watch video
+      </a>
+    </div>
+  `;
+}
+
+function setupApod() {
+  if (!dateInput || !fetchButton) {
+    return;
+  }
+
+  const today = new Date();
+
+  dateInput.max = today.toISOString().split("T")[0];
+
+  getApod();
+
+  fetchButton.addEventListener("click", function () {
+    getApod(dateInput.value);
+  });
+}
+
+
+// ---------------- QUICK LINKS ----------------
+
+function showLinks() {
+  if (!linkList) {
+    return;
+  }
+
+  const links = getData(LINKS_KEY, []);
+
+  linkList.innerHTML = "";
+
+  links.forEach(function (link, index) {
+    const item = document.createElement("div");
+
+    item.className = "quick-link";
+
+    item.innerHTML = `
+      <a
+        href="${link.url}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span>${link.title}</span>
+      </a>
+
+      <button
+        class="link-delete"
+        data-index="${index}"
+        aria-label="Delete link"
+      >
+        ×
+      </button>
+    `;
+
+    linkList.appendChild(item);
+  });
+
+  const deleteButtons =
+    linkList.querySelectorAll(".link-delete");
+
+  deleteButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const links = getData(LINKS_KEY, []);
+
+      const index = Number(button.dataset.index);
+
+      links.splice(index, 1);
+
+      saveData(LINKS_KEY, links);
+
+      showLinks();
+    });
+  });
 }
 
 function setupLinks() {
-  let links = loadLinks();
+  const addButton = $("#add-link");
+  const modal = $("#link-modal");
+  const saveButton = $("#save-link");
+  const titleInput = $("#link-title");
+  const urlInput = $("#link-url");
 
-  if (links.length === 0) {
-    links = [
-      { name: "Stardance", url: "https://stardance.hackclub.com" },
-      { name: "GitHub", url: "https://github.com" },
-      { name: "Hackatime", url: "https://hackatime.hackclub.com" },
-    ];
-    saveLinks(links);
+  showLinks();
+
+  if (!addButton || !modal || !saveButton) {
+    return;
   }
 
-  renderLinks(links);
+  addButton.addEventListener("click", function () {
+    titleInput.value = "";
+    urlInput.value = "";
 
-  const addBtn = $("add-link-button");
-  const modal = $("link-modal");
-  const form = $("link-form");
-  const cancelBtn = $("link-cancel");
-  const nameInput = $("link-name");
-  const urlInput = $("link-url");
+    modal.classList.add("show");
 
-  if (!addBtn || !modal || !form || !cancelBtn || !nameInput || !urlInput) return;
-
-  addBtn.addEventListener("click", () => openLinkModal("add", links));
-  cancelBtn.addEventListener("click", closeLinkModal);
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeLinkModal();
+    titleInput.focus();
   });
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = nameInput.value.trim();
-    const url = urlInput.value.trim();
-    if (!name || !url) return;
+  saveButton.addEventListener("click", function () {
+    const title = titleInput.value.trim();
+    let url = urlInput.value.trim();
 
-    if (currentLinkMode === "edit" && currentLinkIndex != null) {
-      links[currentLinkIndex] = { name, url };
-    } else {
-      links.push({ name, url });
+    if (!title || !url) {
+      return;
     }
 
-    saveLinks(links);
-    renderLinks(links);
-    closeLinkModal();
+    if (!/^https?:\/\//i.test(url)) {
+      url = "https://" + url;
+    }
+
+    const links = getData(LINKS_KEY, []);
+
+    links.push({
+      title: title,
+      url: url
+    });
+
+    saveData(LINKS_KEY, links);
+
+    modal.classList.remove("show");
+
+    showLinks();
   });
 }
 
-function loadTodos() {
-  try {
-    return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY)) || [];
-  } catch {
-    return [];
+
+// ---------------- STICKY NOTES ----------------
+
+function showNotes() {
+  if (!noteList) {
+    return;
   }
-}
 
-function saveTodos(todos) {
-  localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
-}
+  const notes = getData(NOTES_KEY, []);
 
-function renderTodos(todos) {
-  const grid = $("todo-grid");
-  if (!grid) return;
+  noteList.innerHTML = "";
 
-  grid.innerHTML = "";
-  grid.classList.toggle("single-note", todos.length === 1);
+  notes.forEach(function (note, index) {
+    const item = document.createElement("div");
 
-  todos.forEach((todo, index) => {
-    const card = document.createElement("div");
-    card.className = "sticky-note";
-    if (todo.done) card.classList.add("done");
-    card.style.background = todo.color || "#f7d96a";
+    item.className = "sticky-note";
 
-    const textEl = document.createElement("div");
-    textEl.className = "sticky-note-text";
-    textEl.textContent = todo.text;
+    if (note.done) {
+      item.classList.add("done");
+    }
 
-    const footer = document.createElement("div");
-    footer.className = "sticky-note-footer";
+    item.innerHTML = `
+      <label>
+        <input
+          type="checkbox"
+          data-note="${index}"
+          ${note.done ? "checked" : ""}
+        >
 
-    const timeEl = document.createElement("span");
-    timeEl.textContent = todo.createdAt || "";
+        <span>${note.text}</span>
+      </label>
 
-    const btns = document.createElement("div");
-    btns.className = "sticky-note-buttons";
+      <button
+        class="note-delete"
+        data-delete="${index}"
+        aria-label="Delete note"
+      >
+        ×
+      </button>
+    `;
 
-    const doneBtn = document.createElement("button");
-    doneBtn.type = "button";
-    doneBtn.textContent = todo.done ? "✔" : "✓";
+    noteList.appendChild(item);
+  });
 
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.textContent = "✎";
+  const checkboxes =
+    noteList.querySelectorAll("[data-note]");
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "🗑";
+  checkboxes.forEach(function (checkbox) {
+    checkbox.addEventListener("change", function () {
+      const notes = getData(NOTES_KEY, []);
 
-    doneBtn.addEventListener("click", () => {
-      todos[index].done = !todos[index].done;
-      saveTodos(todos);
-      renderTodos(todos);
+      const index = Number(checkbox.dataset.note);
+
+      notes[index].done = checkbox.checked;
+
+      saveData(NOTES_KEY, notes);
+
+      showNotes();
     });
+  });
 
-    editBtn.addEventListener("click", () => {
-      const newText = prompt("Edit note:", todo.text);
-      if (newText != null) {
-        todos[index].text = newText.trim();
-        saveTodos(todos);
-        renderTodos(todos);
-      }
+  const deleteButtons =
+    noteList.querySelectorAll("[data-delete]");
+
+  deleteButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const notes = getData(NOTES_KEY, []);
+
+      const index = Number(button.dataset.delete);
+
+      notes.splice(index, 1);
+
+      saveData(NOTES_KEY, notes);
+
+      showNotes();
     });
-
-    deleteBtn.addEventListener("click", () => {
-      if (confirm("Delete this note?")) {
-        todos.splice(index, 1);
-        saveTodos(todos);
-        renderTodos(todos);
-      }
-    });
-
-    btns.appendChild(doneBtn);
-    btns.appendChild(editBtn);
-    btns.appendChild(deleteBtn);
-    footer.appendChild(timeEl);
-    footer.appendChild(btns);
-
-    card.appendChild(textEl);
-    card.appendChild(footer);
-    grid.appendChild(card);
   });
 }
 
-function setupTodo() {
-  const form = $("todo-form");
-  const input = $("todo-input");
-  const colorInput = $("todo-color");
-  let todos = loadTodos();
-  renderTodos(todos);
+function setupNotes() {
+  const input = $("#note-input");
+  const addButton = $("#add-note");
 
-  if (!form || !input) return;
+  showNotes();
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
+  if (!input || !addButton) {
+    return;
+  }
+
+  function addNote() {
     const text = input.value.trim();
-    if (!text) return;
 
-    const stamp = new Date().toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
+    if (!text) {
+      return;
+    }
+
+    const notes = getData(NOTES_KEY, []);
+
+    notes.push({
+      text: text,
+      done: false
     });
 
-    todos.push({
-      text,
-      done: false,
-      createdAt: stamp,
-      color: colorInput?.value || "#f7d96a",
-    });
+    saveData(NOTES_KEY, notes);
 
-    saveTodos(todos);
-    renderTodos(todos);
     input.value = "";
+
+    showNotes();
+  }
+
+  addButton.addEventListener("click", addNote);
+
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      addNote();
+    }
   });
 }
 
-function applyTilt(element) {
-  element.addEventListener("mousemove", (e) => {
-    const rect = element.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * 0;
-    const rotateY = ((x - centerX) / centerX) * 0;
-    element.style.transform = `perspective(0) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(0px)`;
+
+// ---------------- MODALS ----------------
+
+function setupModals() {
+  const closeButtons =
+    document.querySelectorAll("[data-close-modal]");
+
+  closeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const modal = button.closest(".modal");
+
+      if (modal) {
+        modal.classList.remove("show");
+      }
+    });
   });
 
-  element.addEventListener("mouseleave", () => {
-    element.style.transform = "perspective(0) rotateX(0) rotateY(0) translateY(0px)";
+  const modals = document.querySelectorAll(".modal");
+
+  modals.forEach(function (modal) {
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) {
+        modal.classList.remove("show");
+      }
+    });
   });
 }
 
-function setupTilt() {
-  document.querySelectorAll(".media-container, .notes-section .todo").forEach(applyTilt);
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  maybeShowUserSetup();
-  setupClockGreeting();
+// ---------------- START APP ----------------
+
+document.addEventListener("DOMContentLoaded", function () {
+  startClock();
   setupSearch();
+  loadProfile();
+  setupProfile();
+  setupEmojiPicker();
+  setupApod();
   setupLinks();
-  setupTodo();
-  setupControls();
-  setupTilt();
-  fetchApod();
+  setupNotes();
+  setupModals();
 });
-
-
