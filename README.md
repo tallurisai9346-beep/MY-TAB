@@ -6,7 +6,6 @@ I wanted to build this new tab page because I wanted something that was more eng
 
 # Preview
 <img width="1563" height="877" alt="Screenshot 2026-08-28 121025" src="https://github.com/user-attachments/assets/de1a395e-8861-4542-b7e4-47a36cab747e" />
-<img width="1335" height="852" alt="Screenshot 2026-08-28 121111" src="https://github.com/user-attachments/assets/e991f56d-429e-4ecd-a7cb-9a3de1b8cdd2" />
 
 # Features
 NASA APOD
